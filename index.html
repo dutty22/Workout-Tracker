@@ -574,6 +574,15 @@ canvas { width:100% !important; }
 </div>
 
 
+
+<!-- SPLIT BUILDER MODAL -->
+<div class="modal-overlay" id="splitBuilderModal">
+  <div class="modal" style="padding-bottom:32px">
+    <div class="modal-title" id="splitBuilderTitle">Build Your Program</div>
+    <div id="splitBuilderContent"></div>
+  </div>
+</div>
+
 <!-- SCHEDULE EDIT MODAL -->
 <div class="modal-overlay" id="scheduleModal">
   <div class="modal">
@@ -755,6 +764,12 @@ canvas { width:100% !important; }
         <input class="pin-input" type="number" maxlength="1" id="pin4">
       </div>
     </div>
+    <div class="form-group">
+      <label class="form-label">Program Setup</label>
+      <button type="button" class="btn-secondary" id="splitBuilderBtn" onclick="openSplitBuilder()" style="margin-top:0;text-align:left;padding:10px 12px;display:flex;align-items:center;justify-content:space-between">
+        <span id="splitBuilderBtnText">🏋️ Choose your split →</span>
+      </button>
+    </div>
     <button class="btn-primary" onclick="createProfile()">Create Profile</button>
   </div>
 </div>
@@ -858,6 +873,470 @@ const KEEGAN_BASELINES = {
   'Hanging Leg Raises':{ weight:0, reps:11 },
 };
 
+
+// ─── SPLIT TEMPLATES ───
+const SPLIT_TEMPLATES = {
+  // 6 DAY
+  '6_hypertrophy': [
+    { name:'Push 1', dow:1, exercises:[
+      {name:'Incline Bench Press',sets:3,target:'6–10',prog:true},
+      {name:'Dumbbell Shoulder Press',sets:2,target:'8–12',prog:true},
+      {name:'Pec Fly',sets:2,target:'12–15',prog:false},
+      {name:'Lateral Raises',sets:3,target:'15–20',prog:false},
+      {name:'Tricep Pushdown',sets:2,target:'12–15',prog:false},
+      {name:'Overhead Tricep Extension',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Pull 1', dow:2, exercises:[
+      {name:'Lat Pulldown Wide Grip',sets:3,target:'6–10',prog:true},
+      {name:'Seated Cable Row',sets:2,target:'8–12',prog:true},
+      {name:'Rear Delt Fly',sets:2,target:'15–20',prog:false},
+      {name:'Hammer Curls',sets:2,target:'8–12',prog:true},
+      {name:'Preacher Curls',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Legs 1', dow:3, exercises:[
+      {name:'Leg Press',sets:3,target:'8–12',prog:true},
+      {name:'Romanian Deadlift',sets:2,target:'8–12',prog:true},
+      {name:'Leg Extension',sets:2,target:'12–15',prog:false},
+      {name:'Seated Hamstring Curl',sets:2,target:'12–15',prog:false},
+      {name:'Calf Raises',sets:3,target:'15–20',prog:false},
+    ]},
+    { name:'Push 2', dow:4, exercises:[
+      {name:'Flat Dumbbell Bench',sets:3,target:'8–12',prog:true},
+      {name:'Cable Fly',sets:2,target:'12–15',prog:false},
+      {name:'Smith Machine Shoulder Press',sets:2,target:'8–12',prog:true},
+      {name:'Lateral Raises',sets:3,target:'15–20',prog:false},
+      {name:'Tricep Dips',sets:2,target:'10–15',prog:false},
+      {name:'Single Arm Tricep Extension',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Pull 2', dow:5, exercises:[
+      {name:'Lat Pulldown Neutral Grip',sets:3,target:'8–12',prog:true},
+      {name:'T-Bar Rows',sets:2,target:'8–12',prog:true},
+      {name:'Rear Delt Fly',sets:2,target:'15–20',prog:false},
+      {name:'Incline Dumbbell Curl',sets:2,target:'12–15',prog:false},
+      {name:'Cable Curl',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Legs 2', dow:6, exercises:[
+      {name:'Hack Squat',sets:3,target:'8–12',prog:true},
+      {name:'Romanian Deadlift',sets:2,target:'8–12',prog:true},
+      {name:'Leg Extension',sets:2,target:'12–15',prog:false},
+      {name:'Lying Hamstring Curl',sets:2,target:'12–15',prog:false},
+      {name:'Adductor Machine',sets:2,target:'15–20',prog:false},
+    ]},
+  ],
+  '6_strength': [
+    { name:'Push 1', dow:1, exercises:[
+      {name:'Barbell Bench Press',sets:4,target:'3–5',prog:true},
+      {name:'Incline Dumbbell Press',sets:3,target:'5–7',prog:true},
+      {name:'Overhead Press',sets:3,target:'4–6',prog:true},
+      {name:'Tricep Pushdown',sets:2,target:'8–10',prog:false},
+    ]},
+    { name:'Pull 1', dow:2, exercises:[
+      {name:'Barbell Row',sets:4,target:'3–5',prog:true},
+      {name:'Weighted Pull Up',sets:3,target:'4–6',prog:true},
+      {name:'Face Pull',sets:2,target:'12–15',prog:false},
+      {name:'Barbell Curl',sets:2,target:'6–8',prog:true},
+    ]},
+    { name:'Legs 1', dow:3, exercises:[
+      {name:'Barbell Squat',sets:4,target:'3–5',prog:true},
+      {name:'Romanian Deadlift',sets:3,target:'5–7',prog:true},
+      {name:'Leg Press',sets:2,target:'6–10',prog:false},
+      {name:'Leg Curl',sets:2,target:'8–12',prog:false},
+    ]},
+    { name:'Push 2', dow:4, exercises:[
+      {name:'Overhead Press',sets:4,target:'3–5',prog:true},
+      {name:'Incline Bench Press',sets:3,target:'5–7',prog:true},
+      {name:'Dumbbell Lateral Raises',sets:3,target:'12–15',prog:false},
+      {name:'Close Grip Bench',sets:2,target:'6–8',prog:true},
+    ]},
+    { name:'Pull 2', dow:5, exercises:[
+      {name:'Deadlift',sets:4,target:'3–5',prog:true},
+      {name:'Weighted Pull Up',sets:3,target:'4–6',prog:true},
+      {name:'Seated Cable Row',sets:2,target:'6–10',prog:false},
+      {name:'Hammer Curls',sets:2,target:'8–10',prog:false},
+    ]},
+    { name:'Legs 2', dow:6, exercises:[
+      {name:'Barbell Squat',sets:4,target:'4–6',prog:true},
+      {name:'Bulgarian Split Squat',sets:3,target:'6–8',prog:true},
+      {name:'Leg Extension',sets:2,target:'10–12',prog:false},
+      {name:'Seated Hamstring Curl',sets:2,target:'10–12',prog:false},
+    ]},
+  ],
+  '6_general': [
+    { name:'Push 1', dow:1, exercises:[
+      {name:'Dumbbell Bench Press',sets:3,target:'10–12',prog:true},
+      {name:'Shoulder Press',sets:2,target:'10–12',prog:true},
+      {name:'Lateral Raises',sets:2,target:'15–20',prog:false},
+      {name:'Tricep Pushdown',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Pull 1', dow:2, exercises:[
+      {name:'Lat Pulldown',sets:3,target:'10–12',prog:true},
+      {name:'Cable Row',sets:2,target:'10–12',prog:true},
+      {name:'Dumbbell Curl',sets:2,target:'12–15',prog:false},
+      {name:'Rear Delt Fly',sets:2,target:'15–20',prog:false},
+    ]},
+    { name:'Legs 1', dow:3, exercises:[
+      {name:'Leg Press',sets:3,target:'10–15',prog:true},
+      {name:'Romanian Deadlift',sets:2,target:'10–12',prog:true},
+      {name:'Leg Extension',sets:2,target:'12–15',prog:false},
+      {name:'Leg Curl',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Push 2', dow:4, exercises:[
+      {name:'Incline Dumbbell Press',sets:3,target:'10–12',prog:true},
+      {name:'Pec Fly',sets:2,target:'12–15',prog:false},
+      {name:'Lateral Raises',sets:2,target:'15–20',prog:false},
+      {name:'Overhead Tricep Extension',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Pull 2', dow:5, exercises:[
+      {name:'Neutral Grip Pulldown',sets:3,target:'10–12',prog:true},
+      {name:'T-Bar Row',sets:2,target:'10–12',prog:true},
+      {name:'Hammer Curls',sets:2,target:'12–15',prog:false},
+      {name:'Rear Delt Fly',sets:2,target:'15–20',prog:false},
+    ]},
+    { name:'Legs 2', dow:6, exercises:[
+      {name:'Hack Squat',sets:3,target:'10–15',prog:true},
+      {name:'Romanian Deadlift',sets:2,target:'10–12',prog:true},
+      {name:'Leg Curl',sets:2,target:'12–15',prog:false},
+      {name:'Calf Raises',sets:3,target:'15–20',prog:false},
+    ]},
+  ],
+
+
+  'keegan_ppl': [
+    { name:'Push 1', dow:1, exercises:[
+      {name:'Incline Smith Machine Bench',sets:3,target:'5–7',prog:true},
+      {name:'High Cable Fly',sets:2,target:'12–15',prog:false},
+      {name:'Pec Fly',sets:2,target:'12–15',prog:false},
+      {name:'JM Press',sets:2,target:'5–7',prog:true},
+      {name:'Overhead Tricep Extension',sets:2,target:'12–15',prog:false},
+      {name:'Lateral Raises',sets:2,target:'15–20',prog:false},
+    ]},
+    { name:'Pull 1', dow:2, exercises:[
+      {name:'Wide Grip Lat Pulldown',sets:3,target:'5–7',prog:true},
+      {name:'Neutral Grip Pulldown',sets:2,target:'5–7',prog:true},
+      {name:'T-Bar Rows',sets:2,target:'5–7',prog:true},
+      {name:'Rear Delt Flies',sets:2,target:'12–15',prog:false},
+      {name:'Hammer Curls',sets:2,target:'5–7',prog:true},
+      {name:'Preacher Curls',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Legs 1', dow:3, exercises:[
+      {name:'Leg Press',sets:3,target:'5–7',prog:true},
+      {name:'Barbell RDL',sets:2,target:'5–7',prog:true},
+      {name:'Leg Extension',sets:2,target:'12–15',prog:false},
+      {name:'Seated Hamstring Curl',sets:2,target:'12–15',prog:false},
+      {name:'Adductor Machine',sets:2,target:'12–15',prog:false},
+      {name:'Cable Crunches',sets:3,target:'15–20',prog:false},
+    ]},
+    { name:'Push 2', dow:4, exercises:[
+      {name:'Incline Smith Machine Bench',sets:3,target:'5–7',prog:true},
+      {name:'Pec Fly',sets:2,target:'12–15',prog:false},
+      {name:'JM Press',sets:2,target:'5–7',prog:true},
+      {name:'Single Arm Tricep Extension',sets:2,target:'12–15',prog:false},
+      {name:'Lateral Raises',sets:2,target:'15–20',prog:false},
+    ]},
+    { name:'Pull 2', dow:5, exercises:[
+      {name:'Wide Grip Lat Pulldown',sets:3,target:'5–7',prog:true},
+      {name:'Neutral Grip Pulldown',sets:2,target:'5–7',prog:true},
+      {name:'T-Bar Rows',sets:2,target:'5–7',prog:true},
+      {name:'Rear Delt Flies',sets:2,target:'12–15',prog:false},
+      {name:'Hammer Curls',sets:2,target:'5–7',prog:true},
+      {name:'Preacher Curls',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Legs 2', dow:6, exercises:[
+      {name:'Hack Squat',sets:3,target:'5–7',prog:true},
+      {name:'Barbell RDL',sets:2,target:'5–7',prog:true},
+      {name:'Leg Extension',sets:2,target:'12–15',prog:false},
+      {name:'Lying Hamstring Curl',sets:2,target:'12–15',prog:false},
+      {name:'Abductor Machine',sets:2,target:'15–20',prog:false},
+      {name:'Hanging Leg Raises',sets:3,target:'12–15',prog:false},
+    ]},
+  ],
+
+  // 5 DAY
+  '5_hypertrophy': [
+    { name:'Upper 1', dow:1, exercises:[
+      {name:'Incline Bench Press',sets:3,target:'8–12',prog:true},
+      {name:'Dumbbell Row',sets:3,target:'8–12',prog:true},
+      {name:'Shoulder Press',sets:2,target:'10–12',prog:true},
+      {name:'Lat Pulldown',sets:2,target:'10–12',prog:false},
+      {name:'Lateral Raises',sets:2,target:'15–20',prog:false},
+      {name:'Tricep Pushdown',sets:2,target:'12–15',prog:false},
+      {name:'Dumbbell Curl',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Lower 1', dow:2, exercises:[
+      {name:'Hack Squat',sets:3,target:'8–12',prog:true},
+      {name:'Romanian Deadlift',sets:3,target:'8–12',prog:true},
+      {name:'Leg Extension',sets:2,target:'12–15',prog:false},
+      {name:'Leg Curl',sets:2,target:'12–15',prog:false},
+      {name:'Calf Raises',sets:3,target:'15–20',prog:false},
+    ]},
+    { name:'Push', dow:3, exercises:[
+      {name:'Flat Dumbbell Bench',sets:3,target:'8–12',prog:true},
+      {name:'Cable Fly',sets:2,target:'12–15',prog:false},
+      {name:'Lateral Raises',sets:3,target:'15–20',prog:false},
+      {name:'Overhead Tricep Extension',sets:2,target:'12–15',prog:false},
+      {name:'Tricep Pushdown',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Upper 2', dow:4, exercises:[
+      {name:'Seated Cable Row',sets:3,target:'8–12',prog:true},
+      {name:'Incline Dumbbell Press',sets:2,target:'10–12',prog:true},
+      {name:'Neutral Grip Pulldown',sets:2,target:'10–12',prog:false},
+      {name:'Rear Delt Fly',sets:2,target:'15–20',prog:false},
+      {name:'Hammer Curls',sets:2,target:'10–12',prog:false},
+      {name:'Preacher Curls',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Lower 2', dow:5, exercises:[
+      {name:'Leg Press',sets:3,target:'10–15',prog:true},
+      {name:'Romanian Deadlift',sets:2,target:'10–12',prog:true},
+      {name:'Adductor Machine',sets:2,target:'15–20',prog:false},
+      {name:'Leg Curl',sets:2,target:'12–15',prog:false},
+      {name:'Calf Raises',sets:3,target:'15–20',prog:false},
+    ]},
+  ],
+  '5_strength': [
+    { name:'Squat', dow:1, exercises:[
+      {name:'Barbell Squat',sets:5,target:'3–5',prog:true},
+      {name:'Romanian Deadlift',sets:3,target:'5–7',prog:true},
+      {name:'Leg Press',sets:2,target:'6–10',prog:false},
+      {name:'Leg Curl',sets:2,target:'8–10',prog:false},
+    ]},
+    { name:'Bench', dow:2, exercises:[
+      {name:'Barbell Bench Press',sets:5,target:'3–5',prog:true},
+      {name:'Incline Dumbbell Press',sets:3,target:'5–8',prog:true},
+      {name:'Overhead Press',sets:2,target:'6–8',prog:true},
+      {name:'Tricep Pushdown',sets:2,target:'10–12',prog:false},
+    ]},
+    { name:'Deadlift', dow:3, exercises:[
+      {name:'Conventional Deadlift',sets:4,target:'3–5',prog:true},
+      {name:'Barbell Row',sets:3,target:'5–7',prog:true},
+      {name:'Pull Up',sets:3,target:'4–8',prog:false},
+      {name:'Barbell Curl',sets:2,target:'8–10',prog:false},
+    ]},
+    { name:'Overhead', dow:4, exercises:[
+      {name:'Overhead Press',sets:5,target:'3–5',prog:true},
+      {name:'Barbell Bench Press',sets:3,target:'5–7',prog:true},
+      {name:'Weighted Dips',sets:3,target:'5–8',prog:true},
+      {name:'Lateral Raises',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Accessory', dow:5, exercises:[
+      {name:'Barbell Row',sets:4,target:'4–6',prog:true},
+      {name:'Leg Press',sets:3,target:'6–10',prog:true},
+      {name:'Face Pull',sets:3,target:'12–15',prog:false},
+      {name:'Hammer Curls',sets:2,target:'8–10',prog:false},
+      {name:'Tricep Extension',sets:2,target:'10–12',prog:false},
+    ]},
+  ],
+  '5_general': [
+    { name:'Full Body 1', dow:1, exercises:[
+      {name:'Goblet Squat',sets:3,target:'10–15',prog:true},
+      {name:'Dumbbell Bench Press',sets:3,target:'10–12',prog:true},
+      {name:'Dumbbell Row',sets:3,target:'10–12',prog:true},
+      {name:'Shoulder Press',sets:2,target:'12–15',prog:false},
+      {name:'Plank',sets:3,target:'30–60s',prog:false},
+    ]},
+    { name:'Upper 1', dow:2, exercises:[
+      {name:'Lat Pulldown',sets:3,target:'10–12',prog:true},
+      {name:'Incline Dumbbell Press',sets:3,target:'10–12',prog:true},
+      {name:'Lateral Raises',sets:3,target:'15–20',prog:false},
+      {name:'Tricep Pushdown',sets:2,target:'12–15',prog:false},
+      {name:'Hammer Curls',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Lower', dow:3, exercises:[
+      {name:'Leg Press',sets:3,target:'12–15',prog:true},
+      {name:'Romanian Deadlift',sets:3,target:'10–12',prog:true},
+      {name:'Leg Extension',sets:2,target:'12–15',prog:false},
+      {name:'Leg Curl',sets:2,target:'12–15',prog:false},
+      {name:'Calf Raises',sets:3,target:'15–20',prog:false},
+    ]},
+    { name:'Full Body 2', dow:4, exercises:[
+      {name:'Hack Squat',sets:3,target:'10–15',prog:true},
+      {name:'Cable Row',sets:3,target:'10–12',prog:true},
+      {name:'Dumbbell Bench',sets:3,target:'10–12',prog:true},
+      {name:'Face Pull',sets:2,target:'15–20',prog:false},
+      {name:'Bicycle Crunches',sets:3,target:'15–20',prog:false},
+    ]},
+    { name:'Upper 2', dow:5, exercises:[
+      {name:'Neutral Grip Pulldown',sets:3,target:'10–12',prog:true},
+      {name:'Pec Fly',sets:2,target:'12–15',prog:false},
+      {name:'Rear Delt Fly',sets:2,target:'15–20',prog:false},
+      {name:'Cable Curl',sets:2,target:'12–15',prog:false},
+      {name:'Overhead Tricep Extension',sets:2,target:'12–15',prog:false},
+    ]},
+  ],
+
+  // 4 DAY
+  '4_hypertrophy': [
+    { name:'Upper 1', dow:1, exercises:[
+      {name:'Incline Bench Press',sets:3,target:'8–12',prog:true},
+      {name:'Lat Pulldown',sets:3,target:'8–12',prog:true},
+      {name:'Dumbbell Shoulder Press',sets:2,target:'10–12',prog:true},
+      {name:'Cable Row',sets:2,target:'10–12',prog:false},
+      {name:'Lateral Raises',sets:2,target:'15–20',prog:false},
+      {name:'Tricep Pushdown',sets:2,target:'12–15',prog:false},
+      {name:'Dumbbell Curl',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Lower 1', dow:2, exercises:[
+      {name:'Hack Squat',sets:3,target:'8–12',prog:true},
+      {name:'Romanian Deadlift',sets:3,target:'8–12',prog:true},
+      {name:'Leg Extension',sets:2,target:'12–15',prog:false},
+      {name:'Seated Leg Curl',sets:2,target:'12–15',prog:false},
+      {name:'Calf Raises',sets:3,target:'15–20',prog:false},
+    ]},
+    { name:'Upper 2', dow:4, exercises:[
+      {name:'Flat Dumbbell Bench',sets:3,target:'10–12',prog:true},
+      {name:'Neutral Grip Pulldown',sets:3,target:'10–12',prog:true},
+      {name:'Rear Delt Fly',sets:2,target:'15–20',prog:false},
+      {name:'Pec Fly',sets:2,target:'12–15',prog:false},
+      {name:'Overhead Tricep Extension',sets:2,target:'12–15',prog:false},
+      {name:'Hammer Curls',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Lower 2', dow:5, exercises:[
+      {name:'Leg Press',sets:3,target:'10–15',prog:true},
+      {name:'Romanian Deadlift',sets:2,target:'10–12',prog:true},
+      {name:'Adductor Machine',sets:2,target:'15–20',prog:false},
+      {name:'Lying Leg Curl',sets:2,target:'12–15',prog:false},
+      {name:'Calf Raises',sets:3,target:'15–20',prog:false},
+    ]},
+  ],
+  '4_strength': [
+    { name:'Squat Day', dow:1, exercises:[
+      {name:'Barbell Squat',sets:5,target:'3–5',prog:true},
+      {name:'Romanian Deadlift',sets:3,target:'5–8',prog:true},
+      {name:'Leg Press',sets:2,target:'8–10',prog:false},
+      {name:'Leg Curl',sets:2,target:'10–12',prog:false},
+    ]},
+    { name:'Bench Day', dow:2, exercises:[
+      {name:'Barbell Bench Press',sets:5,target:'3–5',prog:true},
+      {name:'Overhead Press',sets:3,target:'5–7',prog:true},
+      {name:'Incline Dumbbell Press',sets:2,target:'8–10',prog:false},
+      {name:'Tricep Pushdown',sets:2,target:'10–12',prog:false},
+    ]},
+    { name:'Deadlift Day', dow:4, exercises:[
+      {name:'Conventional Deadlift',sets:5,target:'3–5',prog:true},
+      {name:'Barbell Row',sets:3,target:'5–7',prog:true},
+      {name:'Pull Up',sets:3,target:'4–8',prog:false},
+      {name:'Face Pull',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Press Day', dow:5, exercises:[
+      {name:'Overhead Press',sets:5,target:'3–5',prog:true},
+      {name:'Barbell Bench Press',sets:3,target:'6–8',prog:true},
+      {name:'Weighted Dips',sets:3,target:'5–8',prog:true},
+      {name:'Lateral Raises',sets:2,target:'15–20',prog:false},
+      {name:'Barbell Curl',sets:2,target:'8–10',prog:false},
+    ]},
+  ],
+  '4_general': [
+    { name:'Full Body A', dow:1, exercises:[
+      {name:'Goblet Squat',sets:3,target:'12–15',prog:true},
+      {name:'Dumbbell Bench Press',sets:3,target:'10–12',prog:true},
+      {name:'Dumbbell Row',sets:3,target:'10–12',prog:true},
+      {name:'Lateral Raises',sets:2,target:'15–20',prog:false},
+      {name:'Plank',sets:3,target:'30–45s',prog:false},
+    ]},
+    { name:'Full Body B', dow:2, exercises:[
+      {name:'Leg Press',sets:3,target:'12–15',prog:true},
+      {name:'Romanian Deadlift',sets:3,target:'10–12',prog:true},
+      {name:'Lat Pulldown',sets:3,target:'10–12',prog:true},
+      {name:'Shoulder Press',sets:2,target:'12–15',prog:false},
+      {name:'Dumbbell Curl',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Full Body C', dow:4, exercises:[
+      {name:'Hack Squat',sets:3,target:'12–15',prog:true},
+      {name:'Incline Dumbbell Press',sets:3,target:'10–12',prog:true},
+      {name:'Cable Row',sets:3,target:'10–12',prog:true},
+      {name:'Tricep Pushdown',sets:2,target:'12–15',prog:false},
+      {name:'Leg Curl',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Full Body D', dow:5, exercises:[
+      {name:'Leg Extension',sets:3,target:'12–15',prog:false},
+      {name:'Pec Fly',sets:2,target:'12–15',prog:false},
+      {name:'Neutral Grip Pulldown',sets:3,target:'10–12',prog:true},
+      {name:'Rear Delt Fly',sets:2,target:'15–20',prog:false},
+      {name:'Hammer Curls',sets:2,target:'12–15',prog:false},
+    ]},
+  ],
+
+  // 3 DAY
+  '3_hypertrophy': [
+    { name:'Push', dow:1, exercises:[
+      {name:'Incline Bench Press',sets:4,target:'8–12',prog:true},
+      {name:'Dumbbell Shoulder Press',sets:3,target:'10–12',prog:true},
+      {name:'Pec Fly',sets:2,target:'12–15',prog:false},
+      {name:'Lateral Raises',sets:3,target:'15–20',prog:false},
+      {name:'Tricep Pushdown',sets:3,target:'12–15',prog:false},
+    ]},
+    { name:'Pull', dow:3, exercises:[
+      {name:'Lat Pulldown',sets:4,target:'8–12',prog:true},
+      {name:'Cable Row',sets:3,target:'10–12',prog:true},
+      {name:'Rear Delt Fly',sets:2,target:'15–20',prog:false},
+      {name:'Hammer Curls',sets:3,target:'10–12',prog:false},
+      {name:'Preacher Curls',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Legs', dow:5, exercises:[
+      {name:'Hack Squat',sets:4,target:'8–12',prog:true},
+      {name:'Romanian Deadlift',sets:3,target:'8–12',prog:true},
+      {name:'Leg Extension',sets:2,target:'12–15',prog:false},
+      {name:'Leg Curl',sets:2,target:'12–15',prog:false},
+      {name:'Calf Raises',sets:3,target:'15–20',prog:false},
+    ]},
+  ],
+  '3_strength': [
+    { name:'Squat', dow:1, exercises:[
+      {name:'Barbell Squat',sets:5,target:'3–5',prog:true},
+      {name:'Romanian Deadlift',sets:3,target:'5–7',prog:true},
+      {name:'Leg Press',sets:2,target:'8–10',prog:false},
+    ]},
+    { name:'Bench', dow:3, exercises:[
+      {name:'Barbell Bench Press',sets:5,target:'3–5',prog:true},
+      {name:'Overhead Press',sets:3,target:'5–7',prog:true},
+      {name:'Weighted Dips',sets:3,target:'5–8',prog:true},
+      {name:'Barbell Curl',sets:2,target:'8–10',prog:false},
+    ]},
+    { name:'Deadlift', dow:5, exercises:[
+      {name:'Conventional Deadlift',sets:5,target:'3–5',prog:true},
+      {name:'Barbell Row',sets:4,target:'5–7',prog:true},
+      {name:'Pull Up',sets:3,target:'4–8',prog:false},
+      {name:'Face Pull',sets:2,target:'12–15',prog:false},
+    ]},
+  ],
+  '3_general': [
+    { name:'Full Body A', dow:1, exercises:[
+      {name:'Goblet Squat',sets:3,target:'12–15',prog:true},
+      {name:'Dumbbell Bench Press',sets:3,target:'10–12',prog:true},
+      {name:'Dumbbell Row',sets:3,target:'10–12',prog:true},
+      {name:'Shoulder Press',sets:2,target:'12–15',prog:false},
+      {name:'Plank',sets:3,target:'30–45s',prog:false},
+    ]},
+    { name:'Full Body B', dow:3, exercises:[
+      {name:'Leg Press',sets:3,target:'12–15',prog:true},
+      {name:'Romanian Deadlift',sets:3,target:'10–12',prog:true},
+      {name:'Lat Pulldown',sets:3,target:'10–12',prog:true},
+      {name:'Lateral Raises',sets:2,target:'15–20',prog:false},
+      {name:'Tricep Pushdown',sets:2,target:'12–15',prog:false},
+    ]},
+    { name:'Full Body C', dow:5, exercises:[
+      {name:'Hack Squat',sets:3,target:'12–15',prog:true},
+      {name:'Incline Dumbbell Press',sets:3,target:'10–12',prog:true},
+      {name:'Cable Row',sets:3,target:'10–12',prog:true},
+      {name:'Hammer Curls',sets:2,target:'12–15',prog:false},
+      {name:'Overhead Tricep Extension',sets:2,target:'12–15',prog:false},
+    ]},
+  ],
+};
+
+function buildProgramFromTemplate(templateDays) {
+  const program = {};
+  const schedMap = {};
+  templateDays.forEach(day => {
+    program[day.name] = { exercises: day.exercises.map(e => ({...e})) };
+    schedMap[day.dow] = day.name;
+  });
+  // Fill remaining days as rest
+  for (let i = 0; i < 7; i++) {
+    if (!schedMap[i]) schedMap[i] = 'Rest';
+  }
+  return { program, schedMap };
+}
+
 let currentUser = null;
 let currentDayKey = null;
 let bwChart = null, dashBWChart = null, liftChart = null;
@@ -943,12 +1422,14 @@ function createProfile() {
     liftGoal: document.getElementById('npLiftGoal').value,
     startDate: document.getElementById('npStartDate').value,
     pin: pin.length === 4 ? pin : null,
-    program: JSON.parse(JSON.stringify(KEEGAN_PROGRAM)),
+    program: pendingSplit ? JSON.parse(JSON.stringify(pendingSplit.program)) : JSON.parse(JSON.stringify(KEEGAN_PROGRAM)),
+    schedMap: pendingSplit ? JSON.parse(JSON.stringify(pendingSplit.schedMap)) : null,
   };
   const profiles = getProfiles();
   profiles.push(profile);
   saveProfiles(profiles);
   currentUser = profile;
+  pendingSplit = null;
   closeModal('newProfileModal');
   enterApp();
 }
@@ -1544,6 +2025,139 @@ function addRestDayRow() {
 function removeRestRow(ri) {
   const row = document.getElementById('rest_row_' + ri);
   if (row) row.remove();
+}
+
+
+// ─── SPLIT BUILDER ───
+let pendingSplit = null;
+let splitStep = 1;
+let splitDays = null;
+let splitFocus = null;
+
+function openSplitBuilder() {
+  splitStep = 1;
+  splitDays = null;
+  splitFocus = null;
+  pendingSplit = null;
+  renderSplitStep();
+  document.getElementById('splitBuilderModal').classList.add('open');
+}
+
+function renderSplitStep() {
+  const title = document.getElementById('splitBuilderTitle');
+  const content = document.getElementById('splitBuilderContent');
+
+  if (splitStep === 1) {
+    title.textContent = 'Days Per Week';
+    content.innerHTML = [3,4,5,6].map(d => `
+      <div onclick="selectSplitDays(${d})" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:border-color 0.15s" id="days_opt_${d}">
+        <div>
+          <div style="font-family:Barlow Condensed,sans-serif;font-size:16px;font-weight:900;text-transform:uppercase">${d} Days / Week</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${7-d} rest day${7-d>1?'s':''}</div>
+        </div>
+        <div style="font-size:20px">${d===6?'🔥':d===5?'💪':d===4?'⚡':'🎯'}</div>
+      </div>`).join('');
+  } else if (splitStep === 15) {
+    // Special step for 6 days — offer Keegan's PPL or standard options
+    title.textContent = 'Choose a Template';
+    content.innerHTML = `
+      <div onclick="selectKeeganPPL()" style="background:rgba(232,53,10,0.08);border:1px solid rgba(232,53,10,0.3);border-radius:6px;padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-family:Barlow Condensed,sans-serif;font-size:16px;font-weight:900;text-transform:uppercase;color:var(--orange)">Keegan's PPL ⭐</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">6 day Push Pull Legs · strength-hypertrophy hybrid · 5–7 rep main lifts</div>
+        </div>
+      </div>
+      <div onclick="splitStep=2;renderSplitStep()" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-family:Barlow Condensed,sans-serif;font-size:16px;font-weight:900;text-transform:uppercase">Standard 6 Day</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Choose your own goal and get a generated program</div>
+        </div>
+      </div>
+      <button class="btn-secondary" onclick="splitStep=1;renderSplitStep()" style="margin-top:8px">← Back</button>`;
+  } else if (splitStep === 2) {
+    title.textContent = 'Your Goal';
+    content.innerHTML = [
+      {key:'hypertrophy', label:'Hypertrophy', sub:'Build muscle size and definition', icon:'💪'},
+      {key:'strength', label:'Strength', sub:'Get stronger on compound lifts', icon:'🏋️'},
+      {key:'general', label:'General Fitness', sub:'Stay active and build a base', icon:'🎯'},
+    ].map(f => `
+      <div onclick="selectSplitFocus('${f.key}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-family:Barlow Condensed,sans-serif;font-size:16px;font-weight:900;text-transform:uppercase">${f.label}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${f.sub}</div>
+        </div>
+        <div style="font-size:20px">${f.icon}</div>
+      </div>`).join('');
+    content.innerHTML += `<button class="btn-secondary" onclick="splitStep=1;renderSplitStep()" style="margin-top:8px">← Back</button>`;
+  } else if (splitStep === 3) {
+    title.textContent = 'Your Program';
+    const key = splitDays + '_' + splitFocus;
+    const template = SPLIT_TEMPLATES[key];
+    if (!template) {
+      content.innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center">No template found for this combination</div>';
+      return;
+    }
+    const focusLabel = {hypertrophy:'Hypertrophy',strength:'Strength',general:'General Fitness'}[splitFocus];
+    const dowNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    content.innerHTML = `
+      <div style="background:rgba(245,120,10,0.08);border:1px solid rgba(245,120,10,0.2);border-radius:6px;padding:12px 14px;margin-bottom:14px">
+        <div style="font-family:Barlow Condensed,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--orange)">${splitDays} Day ${focusLabel}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Exercises are suggestions — you can swap them anytime in the app</div>
+      </div>
+      ${template.map(day => `
+        <div style="background:var(--card2);border:1px solid var(--border);border-radius:6px;margin-bottom:8px;overflow:hidden">
+          <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+            <div style="font-family:Barlow Condensed,sans-serif;font-size:14px;font-weight:900;text-transform:uppercase">${day.name}</div>
+            <div style="font-family:Barlow Condensed,sans-serif;font-size:10px;color:var(--orange);font-weight:700;letter-spacing:0.1em">${dowNames[day.dow]}</div>
+          </div>
+          <div style="padding:8px 14px">
+            ${day.exercises.map(ex => `
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)">
+                <div style="font-size:12px;font-family:Barlow Condensed,sans-serif;font-weight:700;text-transform:uppercase">${ex.name}</div>
+                <div style="font-size:10px;color:var(--muted)">${ex.sets}×${ex.target}</div>
+              </div>`).join('')}
+          </div>
+        </div>`).join('')}
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn-secondary" onclick="splitStep=2;renderSplitStep()" style="margin-top:0;flex:1">← Back</button>
+        <button class="btn-primary" onclick="confirmSplit()" style="flex:2">Use This Program</button>
+      </div>`;
+  }
+}
+
+function selectSplitDays(d) {
+  splitDays = d;
+  splitStep = d === 6 ? 15 : 2; // Step 1.5 for 6 days to show Keegan's PPL option
+  renderSplitStep();
+}
+
+
+function selectKeeganPPL() {
+  splitDays = 6;
+  splitFocus = 'keegan';
+  // Build directly from template
+  const template = SPLIT_TEMPLATES['keegan_ppl'];
+  pendingSplit = buildProgramFromTemplate(template);
+  document.getElementById('splitBuilderModal').classList.remove('open');
+  document.getElementById('splitBuilderBtnText').textContent = "✅ Keegan's PPL — tap to change";
+  showToast("Keegan's PPL selected!");
+}
+
+function selectSplitFocus(f) {
+  splitFocus = f;
+  splitStep = 3;
+  renderSplitStep();
+}
+
+function confirmSplit() {
+  const key = splitDays + '_' + splitFocus;
+  const template = SPLIT_TEMPLATES[key];
+  if (!template) return;
+  pendingSplit = buildProgramFromTemplate(template);
+  document.getElementById('splitBuilderModal').classList.remove('open');
+  const focusLabel = {hypertrophy:'Hypertrophy',strength:'Strength',general:'General Fitness'}[splitFocus];
+  document.getElementById('splitBuilderBtnText').textContent = '✅ ' + splitDays + ' Day ' + focusLabel + ' — tap to change';
+  showToast('Program selected!');
 }
 
 // ─── INIT ───
