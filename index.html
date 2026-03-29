@@ -2166,7 +2166,7 @@ document.addEventListener("DOMContentLoaded", function() { renderProfileList(); 
 // ─── SERVICE WORKER ───
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/workout-tracker/sw.js')
+    navigator.serviceWorker.register('./sw.js')
       .catch(err => console.log('SW registration failed:', err));
   });
 }
